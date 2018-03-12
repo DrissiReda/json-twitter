@@ -1,3 +1,5 @@
 module.exports = {
-  "mongodbHost" : "localhost"
+  "mongodbUser" : "root",
+  "mongodbPass" : "aws-app",
+  "mongodbHost" : "ds211309.mlab.com"
 };
