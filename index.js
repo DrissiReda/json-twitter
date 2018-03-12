@@ -3,6 +3,7 @@ var express = require('express'),
     logger = require('morgan'),
     cookieParser = require('cookie-parser'),
     bodyParser = require('body-parser'),
+    loggedin = require('connect-ensure-login'),
     methodOverride = require('method-override'),
     session = require('express-session'),
     passport = require('passport'),
@@ -13,10 +14,14 @@ var express = require('express'),
     //TOTP
     var speakeasy = require('speakeasy');
     var QRCode = require('qrcode'); //required for converting otp-url to dataUrl
+    var base32 = require('thirty-two');
+    var sprintf = require('sprintf');
+    var crypto = require('crypto');
 
-var config = require('./config.js'), //config file contains all tokens and other private info
+    var config = require('./config.js'), //config file contains all tokens and other private info
     funct  = require('./functions.js'); //funct file contains our helper functions for our Passport and database work
 
+var strings = require('./views/strings.json');
 var app = express();
 
 //===============EXPRESS================
@@ -148,7 +153,6 @@ app.post('/local-reg', passport.authenticate('local-signup', {
 
 //sends the request through our local login/signin strategy, and if successful takes user to homepage, otherwise returns then to signin page
 app.post('/signin', passport.authenticate('local-signin', {
-  successRedirect: '/',
   failureRedirect: '/signin',
   session: true
   }),function(req, res) {
@@ -159,13 +163,13 @@ app.post('/signin', passport.authenticate('local-signin', {
         } else {
             console.log(" this is plain ");
             req.session.method = 'plain';
-            res.redirect('/totp-setup');
+            res.redirect('/');
         }
     }
 );
 // totp setup routes
 app.get('/totp-setup',
-    isLoggedIn,
+    loggedin.ensureLoggedIn(),
     ensureTotp,
     function(req, res) {
         var url = null;
@@ -174,6 +178,8 @@ app.get('/totp-setup',
                                  req.user.username, req.user.key);
             url = "https://chart.googleapis.com/chart?chs=166x166&chld=L|0&cht=qr&chl=" +
                    qrData;
+            console.log(url);
+            console.log(req.user);
         }
 
         res.render('totp', {
@@ -185,7 +191,7 @@ app.get('/totp-setup',
 );
 
 app.post('/totp-setup',
-    isLoggedIn,
+    loggedin.ensureLoggedIn(),
     ensureTotp,
     function(req, res) {
         if(req.body.totp) {
@@ -229,7 +235,7 @@ function isLoggedIn(req, res, next) {
     if(req.isAuthenticated()) {
         next();
     } else {
-        res.redirect('/signin');
+        res.redirect('/');
     }
 }
 
@@ -239,6 +245,6 @@ function ensureTotp(req, res, next) {
        (!req.user.key && req.session.method == 'plain')) {
         next();
     } else {
-        res.redirect('/signin');
+        res.redirect('/');
     }
 }

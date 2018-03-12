@@ -4,7 +4,9 @@
   "dependencies": {
     "bcryptjs": "^0.7.12",
     "body-parser": "^1.0.0",
+    "connect-ensure-login": "^0.1.1",
     "cookie-parser": "^1.0.0",
+    "crypto": "^1.0.1",
     "express": "^3.5.0",
     "express-handlebars": "^3.0.0",
     "express-session": "^1.0.0",
@@ -19,7 +21,9 @@
     "passport-twitter": "^1.0.2",
     "q": "^1.0.1",
     "qrcode": "^1.2.0",
-    "speakeasy": "^2.0.0"
+    "speakeasy": "^2.0.0",
+    "sprintf": "^0.1.5",
+    "thirty-two": "^1.0.2"
   },
   "engines": {
     "node": "4.8.2"
