@@ -1,3 +1,5 @@
+
+
 var bcrypt = require('bcryptjs'),
     Q = require('q'),
     config = require('./config.js'); //config file contains all tokens and other private info
@@ -30,7 +32,7 @@ exports.localReg = function (req, username, password, email) {
             "password"  : hash,
             "email"     : req.body.email,
             "avatar"    : "https://avatars3.githubusercontent.com/u/16291156?s=400&v=4",
-            "twofactor" : false
+            "key"       : null
            }
 
           console.log("CREATING USER:", username);
@@ -61,28 +63,18 @@ exports.localAuth = function (username, password) {
       .then(function (result) {
         if (null == result) {
           console.log("USERNAME NOT FOUND:", username);
-
           deferred.resolve(false);
         }
+
         else {
           var hash = result.password;
           console.log("FOUND USER: " + result.username);
-          for (o in result)
-          {
-            console.log(o + ' is '+ result[o]);
-          }
-          if(!result.twofactor) // 2FA disabled
-          {
-              if (bcrypt.compareSync(password, hash)) {
-              deferred.resolve(result);
-            } else {
-              console.log("AUTHENTICATION FAILED");
-              deferred.resolve(false);
-              }
-          }
-          else { // 2FA enabled
-
-          }
+          if (bcrypt.compareSync(password, hash)) {
+            deferred.resolve(result);
+          } else {
+            console.log("AUTHENTICATION FAILED");
+            deferred.resolve(false);
+            }
         }
         db.close();
       });

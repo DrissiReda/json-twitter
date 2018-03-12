@@ -12,8 +12,11 @@
       <p>Username: {{user.username}}</p>
       <p>Avatar: <img src="{{user.avatar}}" width="40" height="40"/></p>
       <p> Email : {{user.email}} </p>
+      <a href="/totp-setup" class="btn btn-primary btn-lg" role="button">
+        Enable OTP
+      </a>
     </div>
-  </div>
+
 
 {{else}}
   <div class="jumbotron">

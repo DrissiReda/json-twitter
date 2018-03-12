@@ -9,6 +9,7 @@ var express = require('express'),
     LocalStrategy = require('passport-local'),
     GoogleStrategy = require('passport-google'),
     FacebookStrategy = require('passport-facebook');
+    TotpStrategy = require('passport-totp').Strategy;
     //TOTP
     var speakeasy = require('speakeasy');
     var QRCode = require('qrcode'); //required for converting otp-url to dataUrl
@@ -18,6 +19,41 @@ var config = require('./config.js'), //config file contains all tokens and other
 
 var app = express();
 
+//===============EXPRESS================
+// Configure Express
+app.use(logger('combined'));
+app.use(cookieParser('supernova'));
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+app.use(methodOverride('X-HTTP-Method-Override'));
+app.use(session({secret: 'supernova', saveUninitialized: true, resave: true}));
+app.use(passport.initialize());
+app.use(passport.session());
+
+// Session-persisted message middleware
+app.use(function(req, res, next){
+  var err = req.session.error,
+      msg = req.session.notice,
+      success = req.session.success;
+
+  delete req.session.error;
+  delete req.session.success;
+  delete req.session.notice;
+
+  if (err) res.locals.error = err;
+  if (msg) res.locals.notice = msg;
+  if (success) res.locals.success = success;
+
+  next();
+});
+
+// Configuring express to use handlebars templates
+var hbs = exphbs.create({
+    defaultLayout: 'main',
+});
+app.engine('handlebars', hbs.engine);
+app.set('view engine', 'handlebars');
+
 //===============PASSPORT===============
 
 // Passport session setup.
@@ -26,10 +62,7 @@ passport.serializeUser(function(user, done) {
   done(null, user);
 });
 
-passport.deserializeUser(function(obj, done) {
-  console.log("deserializing " + obj);
-  done(null, obj);
-});
+
 // Use the LocalStrategy within Passport to login/"signin" users.
 passport.use('local-signin', new LocalStrategy(
   {passReqToCallback : true}, //allows us to pass back the request to the callback
@@ -74,41 +107,25 @@ passport.use('local-signup', new LocalStrategy(
     });
   }
 ));
-
-//===============EXPRESS================
-// Configure Express
-app.use(logger('combined'));
-app.use(cookieParser());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(methodOverride('X-HTTP-Method-Override'));
-app.use(session({secret: 'supernova', saveUninitialized: true, resave: true}));
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Session-persisted message middleware
-app.use(function(req, res, next){
-  var err = req.session.error,
-      msg = req.session.notice,
-      success = req.session.success;
-
-  delete req.session.error;
-  delete req.session.success;
-  delete req.session.notice;
-
-  if (err) res.locals.error = err;
-  if (msg) res.locals.notice = msg;
-  if (success) res.locals.success = success;
-
-  next();
+//Added Totp strategy
+passport.use(new TotpStrategy(
+    function(user, done) {
+        // The user object carries all user related information, including
+        // the shared-secret (key) and password.
+        console.log("This is totp strategy");
+        console.log(user);
+        var key = user.key;
+        if(!key) {
+            return done(new Error('No key'));
+        } else {
+            return done(null, base32.decode(key), 30); //30 = valid key period
+        }
+    })
+);
+passport.deserializeUser(function(obj, done) {
+  console.log("deserializing " + obj);
+  done(null, obj);
 });
-
-// Configuring express to use handlebars templates
-var hbs = exphbs.create({
-    defaultLayout: 'main',
-});
-app.engine('handlebars', hbs.engine);
-app.set('view engine', 'handlebars');
 
 //===============ROUTES===============
 
@@ -130,10 +147,66 @@ app.post('/local-reg', passport.authenticate('local-signup', {
 );
 
 //sends the request through our local login/signin strategy, and if successful takes user to homepage, otherwise returns then to signin page
-app.post('/login', passport.authenticate('local-signin', {
+app.post('/signin', passport.authenticate('local-signin', {
   successRedirect: '/',
-  failureRedirect: '/signin'
-  })
+  failureRedirect: '/signin',
+  session: true
+  }),function(req, res) {
+        if(req.user.key) {
+            console.log(" this is totp");
+            req.session.method = 'totp';
+            res.redirect('/totp-input');
+        } else {
+            console.log(" this is plain ");
+            req.session.method = 'plain';
+            res.redirect('/totp-setup');
+        }
+    }
+);
+// totp setup routes
+app.get('/totp-setup',
+    isLoggedIn,
+    ensureTotp,
+    function(req, res) {
+        var url = null;
+        if(req.user.key) {
+            var qrData = sprintf('otpauth://totp/%s?secret=%s',
+                                 req.user.username, req.user.key);
+            url = "https://chart.googleapis.com/chart?chs=166x166&chld=L|0&cht=qr&chl=" +
+                   qrData;
+        }
+
+        res.render('totp', {
+            strings: strings,
+            user: req.user,
+            qrUrl: url
+        });
+    }
+);
+
+app.post('/totp-setup',
+    isLoggedIn,
+    ensureTotp,
+    function(req, res) {
+        if(req.body.totp) {
+            req.session.method = 'totp';
+
+            var secret = base32.encode(crypto.randomBytes(16));
+            //Discard equal signs (part of base32,
+            //not required by Google Authenticator)
+            //Base32 encoding is required by Google Authenticator.
+            //Other applications
+            //may place other restrictions on the shared key format.
+            secret = secret.toString().replace(/=/g, '');
+            req.user.key = secret;
+        } else {
+            req.session.method = 'plain';
+
+            req.user.key = null;
+        }
+
+        res.redirect('/totp-setup');
+    }
 );
 
 //logs user out of site, deleting them from the session, and returns to homepage
@@ -144,49 +217,28 @@ app.get('/logout', function(req, res){
   res.redirect('/');
   req.session.notice = "You have successfully been logged out " + name + "!";
 });
-//2FA setup
-app.post('/twofactor/setup', function(req, res){
-    const secret = speakeasy.generateSecret({length: 10});
-    QRCode.toDataURL(secret.otpauth_url, (err, data_url)=>{
-        //save to logged in user.
-        user.twofactor = {
-            secret: "",
-            tempSecret: secret.base32,
-            dataURL: data_url,
-            otpURL: secret.otpauth_url
-        };
-        return res.json({
-            message: 'Verify OTP',
-            tempSecret: secret.base32,
-            dataURL: data_url,
-            otpURL: secret.otpauth_url
-        });
-    });
-});
-//Verifying before setting up 2FA in order not to lock out the user
-app.post('/twofactor/verify', function(req, res){
-    var verified = speakeasy.totp.verify({
-        secret: user.twofactor.tempSecret, //secret of the logged in user
-        encoding: 'base32',
-        token: req.body.token
-    });
-    if(verified){
-        user.twofactor.secret = user.twofactor.tempSecret; //set secret, confirm 2fa
-        return res.send('Two-factor auth enabled');
-    }
-    return res.status(400).send('Invalid token, verification failed');
-});
 
-//2FA details
-app.get('/twofactor/setup', function(req, res){
-    res.json(user.twofactor);
-});
-//disable 2FA
-app.delete('/twofactor/setup', function(req, res){
-    delete user.twofactor;
-    res.send('success');
-});
 //===============PORT=================
 var port = process.env.PORT || 5000;
 app.listen(port);
 console.log("listening on " + port + "!");
+//============FUNCTIONS===============
+function isLoggedIn(req, res, next) {
+    console.log("isloggedin");
+    console.log(req.body);
+    if(req.isAuthenticated()) {
+        next();
+    } else {
+        res.redirect('/signin');
+    }
+}
+
+function ensureTotp(req, res, next) {
+    console.log("ensure totp");
+    if((req.user.key && req.session.method == 'totp') ||
+       (!req.user.key && req.session.method == 'plain')) {
+        next();
+    } else {
+        res.redirect('/signin');
+    }
+}
