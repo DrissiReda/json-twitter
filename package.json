@@ -12,10 +12,13 @@
     "passport-local": "^1.0.0",
     "passport-twitter": "^1.0.2",
     "q": "^1.0.1",
-    "cookie-parser":"^1.0.0",
-    "morgan":"^1.8.0",
-    "body-parser":"^1.0.0",
-    "method-override":"^1.0.0",
-    "express-session":"^1.0.0"
+    "cookie-parser": "^1.0.0",
+    "morgan": "^1.8.0",
+    "body-parser": "^1.0.0",
+    "method-override": "^1.0.0",
+    "express-session": "^1.0.0"
+  },
+  "devDependencies": {
+    "forever": "^0.15.3"
   }
 }
