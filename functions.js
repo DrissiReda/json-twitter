@@ -7,7 +7,7 @@ var mongodbUrl = 'mongodb://' +config.mongodbUser+':'+config.mongodbPass+'@'+con
 var MongoClient = require('mongodb').MongoClient
 
 //used in local-signup strategy
-exports.localReg = function (username, password) {
+exports.localReg = function (req, username, password, email) {
   var deferred = Q.defer();
   MongoClient.connect(mongodbUrl, function (err, db) {
     if (err)
@@ -26,10 +26,12 @@ exports.localReg = function (username, password) {
         else  {
           var hash = bcrypt.hashSync(password, 8);
           var user = {
-            "username": username,
-            "password": hash,
-            "avatar": "https://avatars3.githubusercontent.com/u/16291156?s=400&v=4"
-          }
+            "username"  : username,
+            "password"  : hash,
+            "email"     : req.body.email,
+            "avatar"    : "https://avatars3.githubusercontent.com/u/16291156?s=400&v=4",
+            "twofactor" : false
+           }
 
           console.log("CREATING USER:", username);
 
@@ -55,7 +57,6 @@ exports.localAuth = function (username, password) {
 
   MongoClient.connect(mongodbUrl, function (err, db) {
     var collection = db.collection('localUsers');
-
     collection.findOne({'username' : username})
       .then(function (result) {
         if (null == result) {
@@ -65,17 +66,24 @@ exports.localAuth = function (username, password) {
         }
         else {
           var hash = result.password;
-
           console.log("FOUND USER: " + result.username);
+          for (o in result)
+          {
+            console.log(o + ' is '+ result[o]);
+          }
+          if(!result.twofactor) // 2FA disabled
+          {
+              if (bcrypt.compareSync(password, hash)) {
+              deferred.resolve(result);
+            } else {
+              console.log("AUTHENTICATION FAILED");
+              deferred.resolve(false);
+              }
+          }
+          else { // 2FA enabled
 
-          if (bcrypt.compareSync(password, hash)) {
-            deferred.resolve(result);
-          } else {
-            console.log("AUTHENTICATION FAILED");
-            deferred.resolve(false);
           }
         }
-
         db.close();
       });
   });
