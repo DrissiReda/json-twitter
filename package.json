@@ -1,0 +1,21 @@
+{
+  "name": "userAuth",
+  "main": "index.js",
+  "dependencies": {
+    "bcryptjs": "^0.7.12",
+    "express": "^3.5.0",
+    "express-handlebars": "^3.0.0",
+    "mongodb": "^2.2.11",
+    "passport": "^0.2.0",
+    "passport-facebook": "^1.0.3",
+    "passport-google": "^0.3.0",
+    "passport-local": "^1.0.0",
+    "passport-twitter": "^1.0.2",
+    "q": "^1.0.1",
+    "cookie-parser":"^1.0.0",
+    "morgan":"^1.8.0",
+    "body-parser":"^1.0.0",
+    "method-override":"^1.0.0",
+    "express-session":"^1.0.0"
+  }
+}
