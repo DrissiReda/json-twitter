@@ -95,14 +95,17 @@ module.exports =  function(passport){
           // User.findOne won't fire until we have all our data back from Google
           process.nextTick(function() {
               // try to find the user based on their google id
-              User.findOne({ 'google_id' : profile.id }, function(err, user) {
+              User.findOne({ 'google.id' : profile.id }, function(err, user) {
+                console.log("we got to findOne before "+err);
                   if (err)
                       return done(err);
                   if (user) {
                       // if a user is found, log them in
+                      console.log("we found him?");
                       return done(null, user);
                   } else {
                       // if the user isnt in our database, create a new user
+                      console.log("registering gooGLE");
                       var RegUser= new User();
                         // set all of the relevant information
                         RegUser.google.id    = profile.id;
