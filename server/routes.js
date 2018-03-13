@@ -29,6 +29,15 @@ app.get('/signin', function(req, res){
 app.get('/profile', function(req, res){
   res.render('profile', {user : req.user});
 });
+app.post('/profile', function(req, res){
+  if(!funct.isTotp(req.user.username))
+  {
+    req.session.method='plain';
+    req.user.key=null;
+    //this only happens if we cancelled and the req key is different from the db key
+  }
+  res.render('profile',{user: req.user});
+});
 
 //sends the request through our local signup strategy, and if successful takes user to homepage, otherwise returns then to signin page
 app.post('/local-reg', passport.authenticate('local-signup', {
@@ -128,7 +137,7 @@ app.post('/totp-input', isLoggedIn, passport.authenticate('totp', {
         funct.disableTotp(req.user.username,req.user.group);
         req.session.notice="Your otp is disabled";
         req.session.method="plain";
-        res.redirect('/');
+        res.redirect('/profile');
     }
     else {
       enableTotp(req.user.username,req.user.key,req.user.group);
@@ -140,6 +149,7 @@ app.post('/totp-input', isLoggedIn, passport.authenticate('totp', {
 app.get('/totp-disable', isLoggedIn, function(req,res){
     req.session.notice="Please enter the code generated on your app to disable 2FA";
     req.user.disable=1;
+    //needs to verify the code before disabling it
     res.redirect('/totp-input');
 });
 //logs user out of site, deleting them from the session, and returns to homepage
@@ -151,7 +161,7 @@ app.get('/logout', function(req, res){
   req.session.notice = "You have successfully been logged out " + name + "!";
 });
 app.get('/test', function(req, res){
-  enableTotp("sd",null,"localUsers");
+  funct.enableTotp("sd",null,"localUsers");
 
 });
 
