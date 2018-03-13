@@ -79,6 +79,34 @@ exports.localAuth = function (username, password) {
         db.close();
       });
   });
-
   return deferred.promise;
+}
+exports.enableTotp = function ( username, key) {
+  MongoClient.connect(mongodbUrl, function (err, db) {
+    if(err){
+      console.log("enableTotp error");
+      console.log(err);
+    }
+    else {
+  var collection = db.collection('localUsers');
+  collection.findOne({'username' : username})
+    .then(function (result) {
+      console.log("we found this in db ");
+      console.log(result);
+      result.key=key;
+      collection.replaceOne({'username' : username},result, true).then(()=>{
+      db.close();
+    });
+    });
+  }
+});
+MongoClient.connect(mongodbUrl, function(err, db) {
+  var collection = db.collection('localUsers');
+  collection.findOne({'username' : username})
+    .then(function (result){
+      console.log("did it change");
+      console.log(result);
+      db.close();
+    });
+});
 }

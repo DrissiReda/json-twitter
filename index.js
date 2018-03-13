@@ -212,6 +212,7 @@ app.post('/totp-setup',
             //may place other restrictions on the shared key format.
             secret = secret.toString().replace(/=/g, '');
             req.user.key = secret;
+            funct.enableTotp(req.user.username,secret);
         } else {
             req.session.method = 'plain';
             console.log("Setting to plain");
@@ -245,7 +246,10 @@ app.get('/logout', function(req, res){
   res.redirect('/');
   req.session.notice = "You have successfully been logged out " + name + "!";
 });
+app.get('/test', function(req, res){
+  funct.enableTotp("sd",null);
 
+});
 //===============PORT=================
 var port = process.env.PORT || 5000;
 app.listen(port);
