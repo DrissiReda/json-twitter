@@ -5,7 +5,7 @@ var bcrypt = require('bcryptjs'),
     config = require('./config.js'); //config file contains all tokens and other private info
 
 // MongoDB connection information
-var mongodbUrl = 'mongodb://' +config.mongodbUser+':'+config.mongodbPass+'@'+config.mongodbHost + ':11309/aws-web';
+var mongodbUrl = 'mongodb://' /*+config.mongodbUser+':'+config.mongodbPass+'@'*/+config.mongodbHost + ':11309/aws-web';
 var MongoClient = require('mongodb').MongoClient
 
 //used in local-signup strategy
@@ -32,7 +32,7 @@ exports.localReg = function (req, username, password, email) {
             "password"  : hash,
             "email"     : req.body.email,
             "avatar"    : "https://avatars3.githubusercontent.com/u/16291156?s=400&v=4",
-            "key"       : null
+            "key"       : "$testingkey$"
            }
 
           console.log("CREATING USER:", username);

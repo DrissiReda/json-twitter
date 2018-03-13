@@ -1,0 +1,8 @@
+<!-- views/totp-input.handlebars -->
+<div class="totp-input" >
+<h3>{{ strings.enterCode }}</h3>
+<form action="/totp-input" method="post">
+  <input type="text" name="code" placeholer="{{ strings.enterCode }}">
+  <input type="submit">
+</form>
+</div>

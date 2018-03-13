@@ -76,7 +76,12 @@ passport.use('local-signin', new LocalStrategy(
     .then(function (user) {
       if (user) {
         console.log("LOGGED IN AS: " + user.username);
-        req.session.success = 'You are successfully logged in ' + user.username + '!';
+        console.log(user);
+        if(user.key)
+          req.session.success = 'You are successfully logged in ' + user.username +' now enter your otp ';
+        else {
+          req.session.success = 'You are successfully logged in ' + user.username ;
+        }
         done(null, user);
       }
       if (!user) {
@@ -153,8 +158,7 @@ app.post('/local-reg', passport.authenticate('local-signup', {
 
 //sends the request through our local login/signin strategy, and if successful takes user to homepage, otherwise returns then to signin page
 app.post('/signin', passport.authenticate('local-signin', {
-  failureRedirect: '/signin',
-  session: true
+  failureRedirect: '/signin'
   }),function(req, res) {
         if(req.user.key) {
             console.log(" this is totp");
@@ -229,7 +233,7 @@ app.get('/totp-input', isLoggedIn, function(req, res) {
 });
 
 app.post('/totp-input', isLoggedIn, passport.authenticate('totp', {
-    failureRedirect: '/signin',
+    failureRedirect: '/totp-input',
     successRedirect: '/'
 }));
 
@@ -258,7 +262,7 @@ function isLoggedIn(req, res, next) {
 }
 
 function ensureTotp(req, res, next) {
-    console.log("ensure totp");
+    console.log("ensure totp"+req.user);
     if((req.user.key && req.session.method == 'totp') ||
        (!req.user.key && req.session.method == 'plain')) {
          console.log("method is "+ req.session.method);
