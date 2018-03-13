@@ -3,8 +3,7 @@
     "username": "Username",
     "password": "Password",
     "enterCode": "Generated Code",
-    "qrSetupSteps": "Scan this code with Google Authenticator",
+    "qrSetupSteps": "Scan this code with your favorite authenticator",
     "welcome": "Welcome",
     "enableTotp": "Enable TOTP"
 }
-

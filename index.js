@@ -213,18 +213,25 @@ app.post('/totp-setup',
             console.log("Setting to plain");
             req.user.key = null;
         }
-        var qrData = sprintf('otpauth://totp/%s?secret=%s',
-                             req.user.username, req.user.key);
-        var url = "https://chart.googleapis.com/chart?chs=166x166&chld=L|0&cht=qr&chl=" +
-               qrData;
         res.redirect('/totp-setup');
-        // res.render('totp', {
-        //     strings: strings,
-        //     user: req.user+'second',
-        //     qrUrl: url
-        // });
     }
 );
+//totp input routes
+app.get('/totp-input', isLoggedIn, function(req, res) {
+    if(!req.user.key) {
+        console.log("Logic error, totp-input requested with no key set");
+        res.redirect('/login');
+    }
+
+    res.render('totp-input', {
+        strings: strings
+    });
+});
+
+app.post('/totp-input', isLoggedIn, passport.authenticate('totp', {
+    failureRedirect: '/signin',
+    successRedirect: '/'
+}));
 
 //logs user out of site, deleting them from the session, and returns to homepage
 app.get('/logout', function(req, res){
