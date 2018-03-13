@@ -13,9 +13,9 @@
       <p>Avatar: <img src="{{user.avatar}}" width="40" height="40"/></p>
       <p> Email : {{user.email}} </p>
       {{#unless user.key}}
-      <a href="/totp-setup" class="btn btn-primary btn-lg" role="button">
-        Enable OTP
-      </a>
+      <form action="/totp-setup" method="post">
+        <input type="Submit" class="btn btn-primary btn-lg" value="Enable OTP">
+      </form>
       {{else}}
       <a href="/totp-disable" class="btn btn-primary btn-lg" role="button">
         Disable OTP

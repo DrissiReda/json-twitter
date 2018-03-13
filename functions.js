@@ -114,6 +114,23 @@ exports.enableTotp = function ( username, key) {
 exports.disableTotp= function(username){
   exports.enableTotp(username,null);
 }
+exports.isTotp= function(username){
+  var ret;
+  MongoClient.connect(mongodbUrl, function (err, db) {
+    if(err){
+      console.log("enableTotp error");
+      console.log(err);
+    }
+    else {
+      var collection = db.collection('localUsers');
+      collection.findOne({'username' : username})
+      .then(function (result) {
+        ret=result.key;
+      }).then(()=>{db.close();});
+    }
+  });
+  return ret;
+}
 exports.ensureTotp = function (req, res, next) {
     console.log("ensure totp"+req.user);
     if((req.user.key && req.session.method == 'totp') ||
@@ -121,6 +138,7 @@ exports.ensureTotp = function (req, res, next) {
          console.log("method is "+ req.session.method);
         next();
     } else {
+      console.log("no totp cuz "+req.session.method);
         res.redirect('/');
     }
 }

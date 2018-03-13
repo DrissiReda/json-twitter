@@ -27,8 +27,11 @@
 
             <h3>{{ strings.enterCode }}</h3>
             <form action="/totp-input" method="post">
-              <input type="text" name="code" placeholer="{{ strings.enterCode }}">
-              <input type="submit">
+              <input type="text" name="code" placeholer="{{ strings.enterCode }}"><br>
+              <input type="submit" value="Verify">
+            </form><br>
+            <form action="/" method="post">
+              <input type="submit" href="/" class="btn btn-warning btn-lg" value="Cancel">
             </form>
         {{/unless}}
       {{else}}

@@ -141,9 +141,21 @@ passport.deserializeUser(function(obj, done) {
 
 //displays our homepage
 app.get('/', function(req, res){
+
   res.render('home', {user: req.user});
 });
-
+app.post('/', function(req, res){
+  console.log(req.user);
+  if(req.user && req.user.username)
+  {
+    if(!funct.isTotp(req.user.username))
+    {
+      req.session.method='plain';
+      req.user.key=null;
+    }
+  }
+  res.render('home', {user: req.user});
+});
 //displays our signup page
 app.get('/signin', function(req, res){
   res.render('signin');
@@ -173,7 +185,7 @@ app.post('/signin', passport.authenticate('local-signin', {
 );
 // totp setup routes
 app.get('/totp-setup',
-    loggedin.ensureLoggedIn(),
+    isLoggedIn,
     funct.ensureTotp,
     function(req, res) {
         var url = null;
@@ -197,7 +209,7 @@ app.get('/totp-setup',
 );
 
 app.post('/totp-setup',
-    loggedin.ensureLoggedIn(),
+    isLoggedIn,
     funct.ensureTotp,
     function(req, res) {
       console.log("totp post");
@@ -246,6 +258,7 @@ app.post('/totp-input', isLoggedIn, passport.authenticate('totp', {
         req.user.key=null;
         funct.disableTotp(req.user.username);
         req.session.notice="Your otp is disabled";
+        req.session.method="plain";
         res.redirect('/');
     }
     else {
