@@ -74,7 +74,7 @@ passport.use('local-signin', new LocalStrategy(
   function(req, username, password, done) {
     funct.localAuth(username, password)
     .then(function (user) {
-      if (user) {
+      if (user) { // success
         console.log("LOGGED IN AS: " + user.username);
         console.log(user);
         if(user.key)
@@ -123,7 +123,7 @@ passport.use(new TotpStrategy(
         // The user object carries all user related information, including
         // the shared-secret (key) and password.
         console.log("This is totp strategy");
-        console.log(user);
+        console.log("the user key is "+ user.key);
         var key = user.key;
         if(!key) {
             return done(new Error('No key'));
@@ -174,7 +174,7 @@ app.post('/signin', passport.authenticate('local-signin', {
 // totp setup routes
 app.get('/totp-setup',
     loggedin.ensureLoggedIn(),
-    ensureTotp,
+    funct.ensureTotp,
     function(req, res) {
         var url = null;
         if(req.user.key) {
@@ -198,7 +198,7 @@ app.get('/totp-setup',
 
 app.post('/totp-setup',
     loggedin.ensureLoggedIn(),
-    ensureTotp,
+    funct.ensureTotp,
     function(req, res) {
       console.log("totp post");
         if(req.body.totp) {
@@ -211,8 +211,12 @@ app.post('/totp-setup',
             //Other applications
             //may place other restrictions on the shared key format.
             secret = secret.toString().replace(/=/g, '');
+            //setting the req.user.key but not the value on the database
+            //we will update the db value after the user successfully verifies the code
+            //that way he will not be locked out of his account if he doesn't finish the setup
+            //process
             req.user.key = secret;
-            funct.enableTotp(req.user.username,secret);
+
         } else {
             req.session.method = 'plain';
             console.log("Setting to plain");
@@ -232,12 +236,30 @@ app.get('/totp-input', isLoggedIn, function(req, res) {
         strings: strings
     });
 });
-//TODO add enableTotp here at success 
+//TODO add enableTotp here at success
 app.post('/totp-input', isLoggedIn, passport.authenticate('totp', {
     failureRedirect: '/totp-input',
-    successRedirect: '/'
-}));
-
+}), function (req, res) {
+    //if the user succeeds for the first time we will set his key value
+    console.log("notice is "+req.user.disable);
+    if(req.user.disable){
+        req.user.key=null;
+        funct.disableTotp(req.user.username);
+        req.session.notice="Your otp is disabled";
+        res.redirect('/');
+    }
+    else {
+      funct.enableTotp(req.user.username,req.user.key);
+      req.session.success="Your otp is valid !";
+      res.redirect('/');
+    }
+});
+//disables totp
+app.get('/totp-disable', isLoggedIn, function(req,res){
+    req.session.notice="Please enter the code generated on your app to disable 2FA";
+    req.user.disable=1;
+    res.redirect('/totp-input');
+});
 //logs user out of site, deleting them from the session, and returns to homepage
 app.get('/logout', function(req, res){
   var name = req.user.username;
@@ -259,17 +281,6 @@ function isLoggedIn(req, res, next) {
     console.log("isloggedin");
     console.log(req.body);
     if(req.isAuthenticated()) {
-        next();
-    } else {
-        res.redirect('/');
-    }
-}
-
-function ensureTotp(req, res, next) {
-    console.log("ensure totp"+req.user);
-    if((req.user.key && req.session.method == 'totp') ||
-       (!req.user.key && req.session.method == 'plain')) {
-         console.log("method is "+ req.session.method);
         next();
     } else {
         res.redirect('/');

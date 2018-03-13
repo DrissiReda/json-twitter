@@ -7,6 +7,7 @@
     <div id="topbar">
     </div>
     <div id="content">
+      {{#unless disable}}
         <h3>{{strings.welcome}}, {{username}}</h3>
         <h4>{{ strings.enableTotp }}</h4>
         {{#unless key}}
@@ -30,6 +31,13 @@
               <input type="submit">
             </form>
         {{/unless}}
+      {{else}}
+      <h3>{{ strings.enterCode }}</h3>
+      <form action="/totp-input" method="post">
+        <input type="text" name="code" placeholer="{{ strings.enterCode }}">
+        <input type="submit">
+      </form>
+      {{/unless}}
 
     </div>
   </body>

@@ -92,21 +92,35 @@ exports.enableTotp = function ( username, key) {
   collection.findOne({'username' : username})
     .then(function (result) {
       console.log("we found this in db ");
-      console.log(result);
-      result.key=key;
-      collection.replaceOne({'username' : username},result, true).then(()=>{
-      db.close();
-    });
+      //console.log(result);
+      //if this is not the first time it means there is no setup
+        if(result.key === key)
+          return 0;
+          result.key=key;
+          collection.replaceOne({'username' : username},result, true).then(()=>{db.close();});
     });
   }
 });
-MongoClient.connect(mongodbUrl, function(err, db) {
-  var collection = db.collection('localUsers');
-  collection.findOne({'username' : username})
-    .then(function (result){
-      console.log("did it change");
-      console.log(result);
-      db.close();
-    });
-});
+// MongoClient.connect(mongodbUrl, function(err, db) {
+//   var collection = db.collection('localUsers');
+//   collection.findOne({'username' : username})
+//     .then(function (result){
+//       console.log("did it change");
+//       console.log(result);
+//       db.close();
+//     });
+// });
+}
+exports.disableTotp= function(username){
+  exports.enableTotp(username,null);
+}
+exports.ensureTotp = function (req, res, next) {
+    console.log("ensure totp"+req.user);
+    if((req.user.key && req.session.method == 'totp') ||
+       (!req.user.key && req.session.method == 'plain')) {
+         console.log("method is "+ req.session.method);
+        next();
+    } else {
+        res.redirect('/');
+    }
 }
