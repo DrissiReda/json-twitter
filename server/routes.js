@@ -27,7 +27,12 @@ app.get('/signin', function(req, res){
   res.render('signin');
 });
 app.get('/profile', function(req, res){
-  res.render('profile', {user : req.user});
+  if(req.user){
+    res.render('profile', {user : req.user});
+  }else {
+    req.session.notice= "Login first";
+    res.redirect('/');
+  }
 });
 app.post('/profile', function(req, res){
   if(!funct.isTotp(req.user.username))
@@ -152,6 +157,18 @@ app.get('/totp-disable', isLoggedIn, function(req,res){
     //needs to verify the code before disabling it
     res.redirect('/totp-input');
 });
+//google login routes
+app.get('/auth/google', passport.authenticate('google', { scope : ['profile', 'email'] }));
+
+// the callback after google has authenticated the user
+app.get('/auth/google/callback',
+    passport.authenticate('google', {
+        successRedirect : '/profile',
+        failureRedirect : '/signin'
+    }));
+
+
+
 //logs user out of site, deleting them from the session, and returns to homepage
 app.get('/logout', function(req, res){
   var name = req.user.username;

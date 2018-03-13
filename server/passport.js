@@ -85,7 +85,7 @@ module.exports =  function(passport){
       })
   );
   //Added Google Strategy
-      passport.use(new GoogleStrategy({
+  passport.use(new GoogleStrategy({
           clientID        : configAuth.googleAuth.clientID,
           clientSecret    : configAuth.googleAuth.clientSecret,
           callbackURL     : configAuth.googleAuth.callbackURL,
@@ -95,7 +95,7 @@ module.exports =  function(passport){
           // User.findOne won't fire until we have all our data back from Google
           process.nextTick(function() {
               // try to find the user based on their google id
-              User.findOne({ 'google.id' : profile.id }, function(err, user) {
+              User.findOne({ 'google_id' : profile.id }, function(err, user) {
                   if (err)
                       return done(err);
                   if (user) {
@@ -103,17 +103,17 @@ module.exports =  function(passport){
                       return done(null, user);
                   } else {
                       // if the user isnt in our database, create a new user
-                      var newUser= {
+                      var RegUser= new User();
                         // set all of the relevant information
-                        "google.id"    : profile.id,
-                        "google.token" : token,
-                        "username"     : profile.displayName,
-                        "email"        : profile.emails[0].value, // pull the first email
-                        "key"          : null,
-                        "group"        : 'google'
+                        RegUser.google.id    = profile.id;
+                        RegUser.google.token = token;
+                        RegUser.username     = profile.displayName;
+                        RegUser.email        = profile.emails[0].value; // pull the first email
+                        RegUser.key          = null;
+                        RegUser.group        = google;
                       // save the user
-                    }
-                      newUser.save(function(err) {
+
+                      RegUser.save(function(err) {
                           if (err)
                               throw err;
                           return done(null, newUser);
