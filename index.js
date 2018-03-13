@@ -17,7 +17,7 @@ var express = require('express'),
     var base32 = require('thirty-two');
     var sprintf = require('sprintf');
     var crypto = require('crypto');
-
+    var a=0;
     var config = require('./config.js'), //config file contains all tokens and other private info
     funct  = require('./functions.js'); //funct file contains our helper functions for our Passport and database work
 
@@ -182,10 +182,12 @@ app.get('/totp-setup',
         }
         console.log(url);
         //console.log(req.user);
+        console.log("rendering "+req.user.key,a++);
         res.render('totp', {
             strings: strings,
-            user: req.user+'second',
-            qrUrl: url
+            username: req.user.username,
+            key : req.user.key,
+            Url: url
         });
     }
 );
@@ -194,6 +196,7 @@ app.post('/totp-setup',
     loggedin.ensureLoggedIn(),
     ensureTotp,
     function(req, res) {
+      console.log("totp post");
         if(req.body.totp) {
             req.session.method = 'totp';
             console.log("Setting to totp");
@@ -210,8 +213,16 @@ app.post('/totp-setup',
             console.log("Setting to plain");
             req.user.key = null;
         }
-
+        var qrData = sprintf('otpauth://totp/%s?secret=%s',
+                             req.user.username, req.user.key);
+        var url = "https://chart.googleapis.com/chart?chs=166x166&chld=L|0&cht=qr&chl=" +
+               qrData;
         res.redirect('/totp-setup');
+        // res.render('totp', {
+        //     strings: strings,
+        //     user: req.user+'second',
+        //     qrUrl: url
+        // });
     }
 );
 

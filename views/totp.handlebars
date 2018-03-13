@@ -7,22 +7,21 @@
     <div id="topbar">
     </div>
     <div id="content">
-        <h3>{{strings.welcome}}, {{user.username}}</h3>
+        <h3>{{strings.welcome}}, {{username}}</h3>
         <h4>{{ strings.enableTotp }}</h4>
-        {{^user.key}}
+        {{#unless key}}
             <form action="/totp-setup" method="post">
                 <input type="checkbox" name="totp" onchange="this.form.submit()">
             </form>
-        {{/user.key}}
-        {{#user.key}}
+        {{else}}
             <form action="/totp-setup" method="post">
                 <input type="checkbox" name="totp" checked onchange="this.form.submit()">
             </form>
 
             <h4>{{strings.qrSetupSteps}}</h4>
 
-            <img src="{{ qrUrl }}" alt="{{ user.key }}">
-        {{/user.key}}
+            <img src="{{ Url }}" alt="{{ key }}">
+        {{/unless}}
 
     </div>
   </body>
