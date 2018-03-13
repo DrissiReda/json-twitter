@@ -32,7 +32,8 @@ exports.localReg = function (req, username, password, email) {
             "password"  : hash,
             "email"     : req.body.email,
             "avatar"    : "https://avatars3.githubusercontent.com/u/16291156?s=400&v=4",
-            "key"       : null//"$testingkey$"
+            "key"       : null,
+            "group"     : 'localUsers' //to know which database the user is in
            }
 
           console.log("CREATING USER:", username);
@@ -81,14 +82,14 @@ exports.localAuth = function (username, password) {
   });
   return deferred.promise;
 }
-exports.enableTotp = function ( username, key) {
+exports.enableTotp = function ( username, key, group) {
   MongoClient.connect(mongodbUrl, function (err, db) {
     if(err){
       console.log("enableTotp error");
       console.log(err);
     }
     else {
-  var collection = db.collection('localUsers');
+  var collection = db.collection(group);
   collection.findOne({'username' : username})
     .then(function (result) {
       console.log("we found this in db ");
@@ -111,8 +112,8 @@ exports.enableTotp = function ( username, key) {
 //     });
 // });
 }
-exports.disableTotp= function(username){
-  exports.enableTotp(username,null);
+exports.disableTotp= function(username,group){
+  exports.enableTotp(username,null,group);
 }
 exports.isTotp= function(username){
   var ret;
