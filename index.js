@@ -178,13 +178,13 @@ app.get('/totp-setup',
                                  req.user.username, req.user.key);
             url = "https://chart.googleapis.com/chart?chs=166x166&chld=L|0&cht=qr&chl=" +
                    qrData;
-            console.log(url);
-            console.log(req.user);
-        }
 
+        }
+        console.log(url);
+        //console.log(req.user);
         res.render('totp', {
             strings: strings,
-            user: req.user,
+            user: req.user+'second',
             qrUrl: url
         });
     }
@@ -196,7 +196,7 @@ app.post('/totp-setup',
     function(req, res) {
         if(req.body.totp) {
             req.session.method = 'totp';
-
+            console.log("Setting to totp");
             var secret = base32.encode(crypto.randomBytes(16));
             //Discard equal signs (part of base32,
             //not required by Google Authenticator)
@@ -207,7 +207,7 @@ app.post('/totp-setup',
             req.user.key = secret;
         } else {
             req.session.method = 'plain';
-
+            console.log("Setting to plain");
             req.user.key = null;
         }
 
@@ -243,6 +243,7 @@ function ensureTotp(req, res, next) {
     console.log("ensure totp");
     if((req.user.key && req.session.method == 'totp') ||
        (!req.user.key && req.session.method == 'plain')) {
+         console.log("method is "+ req.session.method);
         next();
     } else {
         res.redirect('/');
