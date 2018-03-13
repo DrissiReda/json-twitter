@@ -32,7 +32,7 @@ exports.localReg = function (req, username, password, email) {
             "password"  : hash,
             "email"     : req.body.email,
             "avatar"    : "https://avatars3.githubusercontent.com/u/16291156?s=400&v=4",
-            "key"       : "$testingkey$"
+            "key"       : null//"$testingkey$"
            }
 
           console.log("CREATING USER:", username);
