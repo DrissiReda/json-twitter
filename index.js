@@ -232,7 +232,7 @@ app.get('/totp-input', isLoggedIn, function(req, res) {
         strings: strings
     });
 });
-
+//TODO add enableTotp here at success 
 app.post('/totp-input', isLoggedIn, passport.authenticate('totp', {
     failureRedirect: '/totp-input',
     successRedirect: '/'
