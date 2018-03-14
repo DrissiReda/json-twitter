@@ -4,7 +4,7 @@ var FacebookStrategy = require('passport-facebook').Strategy;
 var TwitterStrategy  = require('passport-twitter').Strategy;
 var GoogleStrategy   = require('passport-google-oauth').OAuth2Strategy;
 var TotpStrategy     = require('passport-totp').Strategy;
-var XMLHttpRequest   = require('xmlhttprequest').XMLHttpRequest;
+var base32           = require('thirty-two');
 // load up the user model
 var User       = require('./models/user');
 
@@ -46,7 +46,7 @@ module.exports = function(passport) {
         console.log("logging in "+req.body.email);
         // asynchronous
         process.nextTick(function() {
-            User.findOne({ 'local.email' :  email }, function(err, user) {
+            User.findOne({ 'email' :  email }, function(err, user) {
                 // if there are any errors, return the error
                 if (err)
                     return done(err);
@@ -89,7 +89,7 @@ module.exports = function(passport) {
         process.nextTick(function() {
             // if the user is not already logged in:
             if (!req.user) {
-                User.findOne({ 'local.email' :  email }, function(err, user) {
+                User.findOne({ 'email' :  email }, function(err, user) {
                     // if there are any errors, return the error
                     if (err)
                         return done(err);
@@ -124,7 +124,7 @@ module.exports = function(passport) {
             } else if ( !req.user.local.email ) {
                 // ...presumably they're trying to connect a local account
                 // BUT let's check if the email used to connect a local account is being used by another user
-                User.findOne({ 'local.email' :  email }, function(err, user) {
+                User.findOne({ 'email' :  email }, function(err, user) {
                     if (err)
                         return done(err);
 
@@ -172,8 +172,8 @@ module.exports = function(passport) {
                     if (err)
                         return done(err);
                         console.log("getting link");
-                        getJSON("https://graph.facebook.com/1830143617031885/picture?height=1024&redirect=false").then(function(data){
-                            console.log(data.result);
+                        $.getJSON("https://graph.facebook.com/1830143617031885/picture?height=1024&redirect=false").then(function(data){
+                            console.log(data);
                         });
                     if (user) {
                         // if there is a user id already but no token (user was linked at one point and then removed)
@@ -428,20 +428,5 @@ module.exports = function(passport) {
           })
       );
 // FUNCTIONS ====================================================
-    var getJSON = function(url) {
-      return new Promise(function(resolve, reject) {
-        var xhr = new XMLHttpRequest();
-        xhr.open('get', url, true);
-        xhr.responseType = 'json';
-        xhr.onload = function() {
-          var status = xhr.status;
-          if (status == 200) {
-            resolve(xhr.response);
-          } else {
-            reject(status);
-          }
-        };
-        xhr.send();
-      });
-    }
+    
 };
