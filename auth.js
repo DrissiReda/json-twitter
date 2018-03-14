@@ -20,7 +20,7 @@ module.exports = {
         //heroku
           'clientID'    : '240484377647-f78jqsrbht72oap48srjfllcgs1hj3bi.apps.googleusercontent.com',
           'clientSecret' : '1BKGvh0lt3dKXOCOy2t9DksC',
-        'callbackURL'   : 'http://localhost:5000/auth/google/callback'
+          'callbackURL'   : 'http://aws-twitter.herokuapp.com/auth/google/callback'
         /* heroku
         240484377647-f78jqsrbht72oap48srjfllcgs1hj3bi.apps.googleusercontent.com
         1BKGvh0lt3dKXOCOy2t9DksC
