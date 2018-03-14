@@ -158,17 +158,24 @@ app.get('/totp-disable', isLoggedIn, function(req,res){
     res.redirect('/totp-input');
 });
 //google login routes
-app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 // the callback after google has authenticated the user
 app.get('/auth/google/callback',
     passport.authenticate('google', {
         successRedirect : '/profile',
-        //failureRedirect : '/signin'
-    }), function(req,res) {
+        failureRedirect : '/signin'
+    }) /*,function(req,res) {
       console.log("we got to callback");
       res.redirect('/signin');
-    });
+    }*/);
+
+app.get('/auth/google', function(req, res, next){
+  if(!req.user)
+    return next();
+  res.redirect('/profile'); //already logged in
+},passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+
 
 
 

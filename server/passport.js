@@ -1,8 +1,8 @@
-var LocalStrategy = require('passport-local'),
-TotpStrategy = require('passport-totp').Strategy,
-FacebookStrategy = require('passport-facebook').Strategy,
-TwitterStrategy  = require('passport-twitter').Strategy,
-GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
+var LocalStrategy     = require('passport-local'),
+    TotpStrategy      = require('passport-totp').Strategy,
+    FacebookStrategy  = require('passport-facebook').Strategy,
+    TwitterStrategy   = require('passport-twitter').Strategy,
+    GoogleStrategy    = require('passport-google-oauth').OAuth2Strategy;
 
 // load up the user model
 var User       = require('./models/user');
