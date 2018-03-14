@@ -1,7 +1,9 @@
+//local
+/*
 module.exports = {
 
     'facebookAuth' : {
-        'clientID'      : '138977073599145', 
+        'clientID'      : '138977073599145',
         'clientSecret'  : '33bcfd1cf9a6c2d3cf8d23621f1ce503',
         'callbackURL'   : 'http://localhost:5000/auth/facebook/callback'
     },
@@ -19,8 +21,9 @@ module.exports = {
     }
 
 };
+*/
 //heroku
-/*
+
 module.exports = {
 
     'facebookAuth' : {
@@ -42,4 +45,3 @@ module.exports = {
     }
 
 };
-*/
