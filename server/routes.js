@@ -160,8 +160,9 @@
               var url = null;
               req.user.key=req.session.fixingkey
               if(req.user.key) {
+                //need to remove spaces otherwise some apps don't recognize the QRcodes
                   var qrData = sprintf('otpauth://totp/%s?secret=%s',
-                                       req.user.username, req.user.key);
+                                       req.user.username.toString().replace(/=/g, ''), req.user.key);
                   url = "https://chart.googleapis.com/chart?chs=166x166&chld=L|0&cht=qr&chl=" +
                          qrData;
 
