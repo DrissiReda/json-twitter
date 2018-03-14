@@ -6,7 +6,6 @@
   sprintf = require('sprintf');
 
 // normal routes ===============================================================
-    var fixingkey= null ;
     // show the home page (will also have our signin links)
     app.get('/', function(req, res) {
         res.render('home',{user:req.user});
@@ -28,7 +27,7 @@
         {
           req.session.method='plain';
           req.user.key=null;
-          fixingkey=null;
+          req.session.fixingkey=null;
           //this only happens if we cancelled and the req key is different from the db key
         }
         res.render('profile',{user: req.user});
@@ -55,6 +54,7 @@
             failureRedirect: '/signin'
           }),function(req, res) {
               if(req.user.key) {
+                req.session.fixingkey=req.user.key;
                   console.log(" this is totp");
                   req.session.method = 'totp';
                   res.redirect('/totp-input');
@@ -84,17 +84,7 @@
         app.get('/auth/facebook', passport.authenticate('facebook', {
           scope : ['public_profile', 'email'],
           failureRedirect: '/signin'
-          }),function(req, res) {
-              if(req.user.key) {
-                  console.log(" this is totp");
-                  req.session.method = 'totp';
-                  res.redirect('/totp-input');
-                } else {
-                  console.log(" this is plain ");
-                  req.session.method = 'plain';
-                  res.redirect('/');
-              }
-            });
+          }));
 
         // handle the callback after facebook has authenticated the user
         app.get('/auth/facebook/callback',
@@ -103,6 +93,7 @@
             }), function(req, res) {
                   console.log("we're here though");
                   if(req.user.key) {
+                    req.session.fixingkey=req.user.key;
                     console.log(" this is totp");
                     req.session.method = 'totp';
                     res.redirect('/totp-input');
@@ -119,17 +110,7 @@
         app.get('/auth/twitter', passport.authenticate('twitter', {
           scope : 'email',
           failureRedirect: '/signin'
-          }),function(req, res) {
-              if(req.user.key) {
-                console.log(" this is totp");
-                req.session.method = 'totp';
-                res.redirect('/totp-input');
-              } else {
-                console.log(" this is plain ");
-                req.session.method = 'plain';
-                res.redirect('/');
-              }
-            });
+          }));
 
         // handle the callback after twitter has authenticated the user
         app.get('/auth/twitter/callback',
@@ -138,6 +119,7 @@
             }), function(req, res) {
                   console.log("we're here though");
                   if(req.user.key) {
+                    req.session.fixingkey=req.user.key;
                     console.log(" this is totp");
                     req.session.method = 'totp';
                     res.redirect('/totp-input');
@@ -161,6 +143,7 @@
             }), function(req, res) {
                   console.log("we're here though");
                   if(req.user.key) {
+                    req.session.fixingkey=req.user.key;
                     console.log(" this is totp");
                     req.session.method = 'totp';
                     res.redirect('/totp-input');
@@ -175,7 +158,7 @@
           ensureTotp,
           function(req, res) {
               var url = null;
-              req.user.key=fixingkey
+              req.user.key=req.session.fixingkey
               if(req.user.key) {
                   var qrData = sprintf('otpauth://totp/%s?secret=%s',
                                        req.user.username, req.user.key);
@@ -215,23 +198,23 @@
                   //that way he will not be locked out of his account if he doesn't finish the setup
                   //process
                   req.user.key = secret;
-                  fixingkey = req.user.key;
+                  req.session.fixingkey = req.user.key;
                   console.log("We have set the key to "+req.user.key);
               } else {
                   req.session.method = 'plain';
                   console.log("Setting to plain");
                   req.user.key = null;
-                  fixingkey = req.user.key;
+                  req.session.fixingkey = req.user.key;
               }
               res.redirect('/totp-setup');
           }
       );
       //totp input routes
       app.get('/totp-input', isLoggedIn, function(req, res) {
-          if(!fixingkey)
+          if(!req.session.fixingkey)
             req.user.key=funct.isTotp(req.user.email);
           else {
-            req.user.key=fixingkey;
+            req.user.key=req.session.fixingkey;
           }
           if(!req.user.key) {
               console.log("Logic error, totp-input requested with no key set");
@@ -247,11 +230,11 @@
           failureRedirect: '/totp-input',
       }), function (req, res) {
           //if the user succeeds for the first time we will set his key value
-          req.user.key=fixingkey;
-          console.log("notice is "+req.user.disable);
-          if(req.user.disable){
+          req.user.key=req.session.fixingkey;
+          console.log("notice is "+req.session.disablingtotp);
+          if(req.session.disablingtotp){
               req.user.key=null;
-              fixingkey=null;
+              req.session.fixingkey=null;
               funct.disableTotp(req.user);
               req.session.notice="Your otp is disabled";
               req.session.method="plain";
@@ -267,7 +250,8 @@
       //disables totp
       app.get('/totp-disable', isLoggedIn, function(req,res){
           req.session.notice="Please enter the code generated on your app to disable 2FA";
-          req.user.disable=1;
+          req.session.disablingtotp=1;
+          console.log("disabling....");
           //needs to verify the code before disabling it
           res.redirect('/totp-input');
       });
@@ -367,7 +351,7 @@
         });
     });
     function ensureTotp(req, res, next) {
-      req.user.key=fixingkey;
+      req.user.key=req.session.fixingkey;
         console.log("ensure totp"+req.user);
         if((req.user.key && req.session.method == 'totp') ||
            (!req.user.key && req.session.method == 'plain')) {
@@ -380,7 +364,7 @@
     }
     function  isLoggedIn(req, res, next) {
         if(req.user)
-          req.user.key=fixingkey;
+          req.user.key=req.session.fixingkey;
         if (req.isAuthenticated())
             return next();
 

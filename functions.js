@@ -20,6 +20,7 @@ exports.enableTotp= function( user, key) {
   });
 }
 exports.disableTotp= function(user){
-  enableTotp(user,null);
+  console.log("disabling "+ user.email);
+  exports.enableTotp(user,null);
 }
 // route middleware to ensure user is logged in
