@@ -2,9 +2,9 @@
   "name": "userAuth",
   "main": "index.js",
   "dependencies": {
+    "bcrypt-nodejs": "0.0.3",
     "bcryptjs": "^0.7.12",
     "body-parser": "^1.0.0",
-    "connect-ensure-login": "^0.1.1",
     "cookie-parser": "^1.0.0",
     "crypto": "^1.0.1",
     "express": "^3.5.0",
@@ -21,10 +21,9 @@
     "passport-totp": "0.0.2",
     "passport-twitter": "^1.0.2",
     "q": "^1.0.1",
-    "qrcode": "^1.2.0",
-    "speakeasy": "^2.0.0",
     "sprintf": "^0.1.5",
-    "thirty-two": "^1.0.2"
+    "thirty-two": "^1.0.2",
+    "xmlhttprequest": "^1.8.0"
   },
   "engines": {
     "node": "9.8.0"

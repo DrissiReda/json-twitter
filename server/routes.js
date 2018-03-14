@@ -1,205 +1,353 @@
-//displays our homepage
-var funct  = require('../functions.js'), //funct file contains our helper functions for our Passport and database work
-strings = require('../views/strings.json');
-base32 = require('thirty-two'),
-crypto = require('crypto'),
-sprintf = require('sprintf');
+  module.exports = function(app, passport) {
+  var strings = require('../views/strings.json'),
+  base32 = require('thirty-two'),
+  crypto = require('crypto'),
+  funct = require('../functions.js')
+  sprintf = require('sprintf');
 
-module.exports= function(app, passport){
-app.get('/', function(req, res){
+// normal routes ===============================================================
 
-  res.render('home', {user: req.user});
-});
-app.post('/', function(req, res){
-  console.log(req.user);
-  if(req.user && req.user.username)
-  {
-    if(!funct.isTotp(req.user.username))
-    {
-      req.session.method='plain';
-      req.user.key=null;
-    }
-  }
-  res.render('home', {user: req.user});
-});
-//displays our signup page
-app.get('/signin', function(req, res){
-  res.render('signin');
-});
-app.get('/profile', function(req, res){
-  if(req.user){
-    res.render('profile', {user : req.user});
-  }else {
-    req.session.notice= "Login first";
-    res.redirect('/');
-  }
-});
-app.post('/profile', function(req, res){
-  if(!funct.isTotp(req.user.username))
-  {
-    req.session.method='plain';
-    req.user.key=null;
-    //this only happens if we cancelled and the req key is different from the db key
-  }
-  res.render('profile',{user: req.user});
-});
-
-//sends the request through our local signup strategy, and if successful takes user to homepage, otherwise returns then to signin page
-app.post('/local-reg', passport.authenticate('local-signup', {
-  successRedirect: '/',
-  failureRedirect: '/signin'
-  })
-);
-
-//sends the request through our local login/signin strategy, and if successful takes user to homepage, otherwise returns then to signin page
-app.post('/signin', passport.authenticate('local-signin', {
-  failureRedirect: '/signin'
-  }),function(req, res) {
-        if(req.user.key) {
-            console.log(" this is totp");
-            req.session.method = 'totp';
-            res.redirect('/totp-input');
-        } else {
-            console.log(" this is plain ");
-            req.session.method = 'plain';
-            res.redirect('/');
-        }
-    }
-);
-// totp setup routes
-app.get('/totp-setup',
-    isLoggedIn,
-    funct.ensureTotp,
-    function(req, res) {
-        var url = null;
-        if(req.user.key) {
-            var qrData = sprintf('otpauth://totp/%s?secret=%s',
-                                 req.user.username, req.user.key);
-            url = "https://chart.googleapis.com/chart?chs=166x166&chld=L|0&cht=qr&chl=" +
-                   qrData;
-
-        }
-        console.log(url);
-        //console.log(req.user);
-        console.log("rendering "+req.user.key);
-        res.render('totp', {
-            strings: strings,
-            username: req.user.username,
-            key : req.user.key,
-            Url: url
-        });
-    }
-);
-
-app.post('/totp-setup',
-    isLoggedIn,
-    funct.ensureTotp,
-    function(req, res) {
-      console.log("totp post");
-        if(req.body.totp) {
-            req.session.method = 'totp';
-            console.log("Setting to totp");
-            var secret = base32.encode(crypto.randomBytes(16));
-            //Discard equal signs (part of base32,
-            //not required by Google Authenticator)
-            //Base32 encoding is required by Google Authenticator.
-            //Other applications
-            //may place other restrictions on the shared key format.
-            secret = secret.toString().replace(/=/g, '');
-            //setting the req.user.key but not the value on the database
-            //we will update the db value after the user successfully verifies the code
-            //that way he will not be locked out of his account if he doesn't finish the setup
-            //process
-            req.user.key = secret;
-
-        } else {
-            req.session.method = 'plain';
-            console.log("Setting to plain");
-            req.user.key = null;
-        }
-        res.redirect('/totp-setup');
-    }
-);
-//totp input routes
-app.get('/totp-input', isLoggedIn, function(req, res) {
-    if(!req.user.key) {
-        console.log("Logic error, totp-input requested with no key set");
-        res.redirect('/login');
-    }
-
-    res.render('totp-input', {
-        strings: strings
+    // show the home page (will also have our signin links)
+    app.get('/', function(req, res) {
+        res.render('home',{user:req.user});
     });
-});
-//TODO add enableTotp here at success
-app.post('/totp-input', isLoggedIn, passport.authenticate('totp', {
-    failureRedirect: '/totp-input',
-}), function (req, res) {
-    //if the user succeeds for the first time we will set his key value
-    console.log("notice is "+req.user.disable);
-    if(req.user.disable){
-        req.user.key=null;
-        funct.disableTotp(req.user.username,req.user.group);
-        req.session.notice="Your otp is disabled";
-        req.session.method="plain";
-        res.redirect('/profile');
-    }
-    else {
-      enableTotp(req.user.username,req.user.key,req.user.group);
-      req.session.success="Your otp is valid !";
-      res.redirect('/');
-    }
-});
-//disables totp
-app.get('/totp-disable', isLoggedIn, function(req,res){
-    req.session.notice="Please enter the code generated on your app to disable 2FA";
-    req.user.disable=1;
-    //needs to verify the code before disabling it
-    res.redirect('/totp-input');
-});
-//google login routes
 
-// the callback after google has authenticated the user
-app.get('/auth/google/callback',
-    passport.authenticate('google', {
-        successRedirect : '/profile',
-        failureRedirect : '/signin'
-    }) /*,function(req,res) {
-      console.log("we got to callback");
-      res.redirect('/signin');
-    }*/);
+    // PROFILE SECTION =========================
+    app.get('/profile', funct.isLoggedIn, function(req, res) {
+       if(!req.user) // no one logged in
+          res.redirect('/');
+        console.log("profile key is "+req.user.key);
+        res.render('profile', {
+            user : req.user
+        });
+    });
 
-app.get('/auth/google', function(req, res, next){
-  if(!req.user)
-    return next();
-  res.redirect('/profile'); //already logged in
-},passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-
-
-
-
-//logs user out of site, deleting them from the session, and returns to homepage
-app.get('/logout', function(req, res){
-  var name = req.user.username;
-  console.log("LOGGIN OUT " + req.user.username)
-  req.logout();
-  res.redirect('/');
-  req.session.notice = "You have successfully been logged out " + name + "!";
-});
-app.get('/test', function(req, res){
-  funct.enableTotp("sd",null,"localUsers");
-
-});
-
-//============FUNCTIONS===============
-function isLoggedIn(req, res, next) {
-    console.log("isloggedin");
-    console.log(req.body);
-    if(req.isAuthenticated()) {
-        next();
-    } else {
+    // LOGOUT ==============================
+    app.get('/logout', function(req, res) {
+        req.logout();
         res.redirect('/');
-    }
-}
-}
+    });
+
+// =============================================================================
+// AUTHENTICATE (FIRST signin) ==================================================
+// =============================================================================
+
+    // locally --------------------------------
+        // signin ===============================
+        // show the signin form
+        app.get('/signin', function(req, res) {
+            res.render('signin');
+        });
+
+        // process the signin form
+        app.post('/signin', passport.authenticate('local-signin', {
+            failureRedirect: '/signin'
+          }),function(req, res) {
+              if(req.user.key) {
+                  console.log(" this is totp");
+                  req.session.method = 'totp';
+                  res.redirect('/totp-input');
+              } else {
+                  console.log(" this is plain ");
+                  req.session.method = 'plain';
+                  res.redirect('/');
+              }
+            }
+        );
+
+        // SIGNUP =================================
+        // show the signup form
+        app.get('/signup', function(req, res) {
+            res.render('signin', { user : req.user });
+        });
+
+        // process the signup form
+        app.post('/signup', passport.authenticate('local-signup', {
+            successRedirect : '/', // redirect to the secure profile section
+            failureRedirect : '/signup' // redirect back to the signup page if there is an error
+        }));
+
+    // facebook -------------------------------
+
+        // send to facebook to do the authentication
+        app.get('/auth/facebook', passport.authenticate('facebook', {
+          scope : ['public_profile', 'email'],
+          failureRedirect: '/signin'
+          }),function(req, res) {
+              if(req.user.key) {
+                  console.log(" this is totp");
+                  req.session.method = 'totp';
+                  res.redirect('/totp-input');
+                } else {
+                  console.log(" this is plain ");
+                  req.session.method = 'plain';
+                  res.redirect('/');
+              }
+            });
+
+        // handle the callback after facebook has authenticated the user
+        app.get('/auth/facebook/callback',
+            passport.authenticate('facebook', {
+                failureRedirect : '/'
+            }), function(req, res) {
+                  console.log("we're here though");
+                  if(req.user.key) {
+                    console.log(" this is totp");
+                    req.session.method = 'totp';
+                    res.redirect('/totp-input');
+                  } else {
+                    console.log(" this is plain ");
+                    req.session.method = 'plain';
+                    res.redirect('/');
+                  }
+              });
+
+    // twitter --------------------------------
+
+        // send to twitter to do the authentication
+        app.get('/auth/twitter', passport.authenticate('twitter', {
+          scope : 'email',
+          failureRedirect: '/signin'
+          }),function(req, res) {
+              if(req.user.key) {
+                console.log(" this is totp");
+                req.session.method = 'totp';
+                res.redirect('/totp-input');
+              } else {
+                console.log(" this is plain ");
+                req.session.method = 'plain';
+                res.redirect('/');
+              }
+            });
+
+        // handle the callback after twitter has authenticated the user
+        app.get('/auth/twitter/callback',
+            passport.authenticate('twitter', {
+                failureRedirect : '/'
+            }), function(req, res) {
+                  console.log("we're here though");
+                  if(req.user.key) {
+                    console.log(" this is totp");
+                    req.session.method = 'totp';
+                    res.redirect('/totp-input');
+                  } else {
+                    console.log(" this is plain ");
+                    req.session.method = 'plain';
+                    res.redirect('/');
+                  }
+              });
+
+
+    // google ---------------------------------
+
+        // send to google to do the authentication
+        app.get('/auth/google', passport.authenticate('google', {scope : ['profile', 'email']}));
+
+        // the callback after google has authenticated the user
+        app.get('/auth/google/callback',
+            passport.authenticate('google', {
+                failureRedirect : '/auth/google'
+            }), function(req, res) {
+                  console.log("we're here though");
+                  if(req.user.key) {
+                    console.log(" this is totp");
+                    req.session.method = 'totp';
+                    res.redirect('/totp-input');
+                  } else {
+                    console.log(" this is plain ");
+                    req.session.method = 'plain';
+                    res.redirect('/');
+                  }
+              });
+       app.get('/totp-setup',
+          funct.isLoggedIn,
+          funct.ensureTotp,
+          function(req, res) {
+              var url = null;
+              if(req.user.key) {
+                  var qrData = sprintf('otpauth://totp/%s?secret=%s',
+                                       req.user.username, req.user.key);
+                  url = "https://chart.googleapis.com/chart?chs=166x166&chld=L|0&cht=qr&chl=" +
+                         qrData;
+
+              }
+              console.log(url);
+              //console.log(req.user);
+              console.log("rendering "+req.user.key);
+              funct.enableTotp(req.user.email)
+              res.render('totp', {
+                  strings: strings,
+                  username: req.user.username,
+                  key : req.user.key,
+                  Url: url
+              });
+          }
+      );
+
+      app.post('/totp-setup',
+          funct.isLoggedIn,
+          funct.ensureTotp,
+          function(req, res) {
+            console.log("totp post");
+              if(req.body.totp) {
+                  req.session.method = 'totp';
+                  console.log("Setting to totp");
+                  var secret = base32.encode(crypto.randomBytes(16));
+                  //Discard equal signs (part of base32,
+                  //not required by Google Authenticator)
+                  //Base32 encoding is required by Google Authenticator.
+                  //Other applications
+                  //may place other restrictions on the shared key format.
+                  secret = secret.toString().replace(/=/g, '');
+                  //setting the req.user.key but not the value on the database
+                  //we will update the db value after the user successfully verifies the code
+                  //that way he will not be locked out of his account if he doesn't finish the setup
+                  //process
+                  req.user.key = secret;
+                  console.log("We have set the key to "+req.user.key);
+              } else {
+                  req.session.method = 'plain';
+                  console.log("Setting to plain");
+                  req.user.key = null;
+              }
+              res.redirect('/totp-setup');
+          }
+      );
+      //totp input routes
+      app.get('/totp-input', funct.isLoggedIn, function(req, res) {
+          if(!req.user.key) {
+              console.log("Logic error, totp-input requested with no key set");
+              res.redirect('/login');
+          }
+
+          res.render('totp-input', {
+              strings: strings
+          });
+      });
+      //TODO add enableTotp here at success
+      app.post('/totp-input', funct.isLoggedIn, passport.authenticate('totp', {
+          failureRedirect: '/totp-input',
+      }), function (req, res) {
+          //if the user succeeds for the first time we will set his key value
+          console.log("notice is "+req.user.disable);
+          if(req.user.disable){
+              req.user.key=null;
+              funct.disableTotp(req.user.username,req.user.group);
+              req.session.notice="Your otp is disabled";
+              req.session.method="plain";
+              res.redirect('/profile');
+          }
+          else {
+            //if this is the first time it's being enabled, make it persistent on the db
+            funct.enableTotp(req.user.username,req.user.key,req.user.group);
+            req.session.success="Your otp is valid !";
+            res.redirect('/');
+          }
+      });
+      //disables totp
+      app.get('/totp-disable', funct.isLoggedIn, function(req,res){
+          req.session.notice="Please enter the code generated on your app to disable 2FA";
+          req.user.disable=1;
+          //needs to verify the code before disabling it
+          res.redirect('/totp-input');
+      });
+
+// =============================================================================
+// AUTHORIZE (ALREADY LOGGED IN / CONNECTING OTHER SOCIAL ACCOUNT) =============
+// =============================================================================
+
+    // locally --------------------------------
+        app.get('/connect/local', function(req, res) {
+            res.render('connect-local', { message: req.flash('signinMessage') });
+        });
+        app.post('/connect/local', passport.authenticate('local-signup', {
+            successRedirect : '/profile', // redirect to the secure profile section
+            failureRedirect : '/connect/local', // redirect back to the signup page if there is an error
+            failureFlash : true // allow flash messages
+        }));
+
+    // facebook -------------------------------
+
+        // send to facebook to do the authentication
+        app.get('/connect/facebook', passport.authorize('facebook', { scope : ['public_profile', 'email'] }));
+
+        // handle the callback after facebook has authorized the user
+        app.get('/connect/facebook/callback',
+            passport.authorize('facebook', {
+                successRedirect : '/profile',
+                failureRedirect : '/'
+            }));
+
+    // twitter --------------------------------
+
+        // send to twitter to do the authentication
+        app.get('/connect/twitter', passport.authorize('twitter', { scope : 'email' }));
+
+        // handle the callback after twitter has authorized the user
+        app.get('/connect/twitter/callback',
+            passport.authorize('twitter', {
+                successRedirect : '/profile',
+                failureRedirect : '/'
+            }));
+
+
+    // google ---------------------------------
+
+        // send to google to do the authentication
+        app.get('/connect/google', passport.authorize('google', { scope : ['profile', 'email'] }));
+
+        // the callback after google has authorized the user
+        app.get('/connect/google/callback',
+            passport.authorize('google', {
+                successRedirect : '/profile',
+                failureRedirect : '/'
+            }));
+
+// =============================================================================
+// UNLINK ACCOUNTS =============================================================
+// =============================================================================
+// used to unlink accounts. for social accounts, just remove the token
+// for local account, remove email and password
+// user account will stay active in case they want to reconnect in the future
+
+    // local -----------------------------------
+    app.get('/unlink/local', funct.isLoggedIn, function(req, res) {
+        var user            = req.user;
+        user.local.email    = undefined;
+        user.local.password = undefined;
+        user.save(function(err) {
+            res.redirect('/profile');
+        });
+    });
+
+    // facebook -------------------------------
+    app.get('/unlink/facebook', funct.isLoggedIn, function(req, res) {
+        var user            = req.user;
+        user.facebook.token = undefined;
+        user.save(function(err) {
+            res.redirect('/profile');
+        });
+    });
+
+    // twitter --------------------------------
+    app.get('/unlink/twitter', funct.isLoggedIn, function(req, res) {
+        var user           = req.user;
+        user.twitter.token = undefined;
+        user.save(function(err) {
+            res.redirect('/profile');
+        });
+    });
+
+    // google ---------------------------------
+    app.get('/unlink/google', funct.isLoggedIn, function(req, res) {
+        var user          = req.user;
+        user.google.token = undefined;
+        user.save(function(err) {
+            res.redirect('/profile');
+        });
+    });
+
+
+};
+
+// route middleware to ensure user is logged in

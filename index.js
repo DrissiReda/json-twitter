@@ -6,17 +6,18 @@ var express = require('express'),
     logger = require('morgan'),
     cookieParser = require('cookie-parser'),
     bodyParser = require('body-parser'),
-    loggedin = require('connect-ensure-login'),
     methodOverride = require('method-override'),
     session = require('express-session'),
+    mongoose = require('mongoose'),
     passport = require('passport');
-
+var config=require('./config.js');
 var app = express();
 
 //===============EXPRESS================
 // Configure Express
 app.use(logger('combined'));
-app.use(cookieParser('supernova'));
+mongoose.connect('mongodb://' +config.mongodbUser+':'+config.mongodbPass+'@'+config.mongodbHost + ':11309/aws-web');
+app.use(cookieParser('doesthisreallymatterdoesthislifereallymatter'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(methodOverride('X-HTTP-Method-Override'));
