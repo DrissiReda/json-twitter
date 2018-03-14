@@ -10,7 +10,9 @@
     app.get('/', function(req, res) {
         res.render('home',{user:req.user});
     });
-
+    app.get('/tos', function(req, res) {
+      res.render('tos');
+    });
     // PROFILE SECTION =========================
     app.get('/profile', isLoggedIn, function(req, res) {
        if(!req.user) // no one logged in
