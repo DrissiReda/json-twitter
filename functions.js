@@ -37,7 +37,7 @@ exports.localReg = function (req, username, password, email) {
            }
 
           console.log("CREATING USER:", username);
-
+          req.session.method='plain';
           collection.insert(user)
             .then(function () {
               db.close();
