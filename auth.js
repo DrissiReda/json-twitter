@@ -29,13 +29,13 @@ module.exports = {
     'facebookAuth' : {
         'clientID'      : '138977073599145',
         'clientSecret'  : '33bcfd1cf9a6c2d3cf8d23621f1ce503',
-        'callbackURL'   : 'http://aws-twitter.herokuapp.com/auth/facebook/callback'
+        'callbackURL'   : 'https://aws-twitter.herokuapp.com/auth/facebook/callback'
     },
 
     'twitterAuth' : {
         'consumerKey'       : 'fctmgbWkgNhm8bI6neb4JAb4S',
         'consumerSecret'    : '0WoLeNFZqP47aQ3qajNJ53OiKFNhf8CnduM39znqVGg38bSRtP',
-        'callbackURL'       : 'http://aws-twitter.herokuapp.com/auth/twitter/callback'
+        'callbackURL'       : 'https://aws-twitter.herokuapp.com/auth/twitter/callback'
     },
 
     'googleAuth' : {
