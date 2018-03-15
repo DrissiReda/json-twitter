@@ -6,6 +6,7 @@ var GoogleStrategy   = require('passport-google-oauth').OAuth2Strategy;
 var TotpStrategy     = require('passport-totp').Strategy;
 var base32           = require('thirty-two');
 var request          = require('sync-request');
+var gravatar         = require('gravatar');
 // load up the user model
 var User       = require('./models/user');
 
@@ -108,7 +109,7 @@ module.exports = function(passport) {
                         newUser.username       = req.body.username;
                         newUser.email          = email;
                         newUser.key            = null;
-                        newUser.avatar         = "https://avatars3.githubusercontent.com/u/16291156?s=400&v=4";
+                        newUser.avatar         = gravatar.url(email,{s:'100',r: 'x', d: 'identicon'},true);
                         newUser.local.password = newUser.generateHash(password);
                         newUser.local.email    = email;
 
