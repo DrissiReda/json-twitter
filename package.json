@@ -21,6 +21,7 @@
     "passport-totp": "0.0.2",
     "passport-twitter": "^1.0.2",
     "q": "^1.0.1",
+    "request": "^2.85.0",
     "sprintf": "^0.1.5",
     "thirty-two": "^1.0.2",
     "xmlhttprequest": "^1.8.0"

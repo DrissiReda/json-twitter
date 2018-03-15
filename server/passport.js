@@ -171,13 +171,18 @@ module.exports = function(passport) {
                 User.findOne({ 'facebook.id' : profile.id }, function(err, user) {
                     if (err)
                         return done(err);
-                        console.log("getting link");
-                        $.getJSON("https://graph.facebook.com/1830143617031885/picture?height=1024&redirect=false").then(function(data){
-                            console.log(data);
-                        });
                     if (user) {
                         // if there is a user id already but no token (user was linked at one point and then removed)
-
+                        //generating photo
+                        var Url="https://graph.facebook.com/"+profile.id+"/picture?height=1024&redirect=false";
+                        var request= require('request');
+                        req.session.avatarurl="a";
+                        request({url : Url, json: true}, function(err, response, body){
+                          if(err)
+                            console.log("getting avatar url err is "); console.log(err);
+                          req.session.avatarurl=body.data.url;
+                        });
+                        console.log(" finally p is "+req.session.avatarurl);
                         if (!user.facebook.token) {
                             user.facebook.token = token;
                             user.facebook.name  = profile.name.givenName + ' ' + profile.name.familyName;
@@ -198,7 +203,7 @@ module.exports = function(passport) {
                         newUser.username       = profile.name.givenName+' '+(profile.name.middleName)?profile.name.middleName:''+' '+profile.name.familyName;
                         newUser.email          = ((profile.emails)?profile.emails[0].value:profile.id).toLowerCase();
                         newUser.key            = null;
-                        newUser.avatar         = "https://avatars3.githubusercontent.com/u/16291156?s=400&v=4";
+                        newUser.avatar         = ret;
                         newUser.facebook.id    = profile.id;
                         newUser.facebook.token = token;
                         newUser.facebook.name  = newUser.username;
@@ -220,6 +225,7 @@ module.exports = function(passport) {
                 // user already exists and is logged in, we have to link accounts
                 var user            = req.user; // pull the user out of the session
                 console.log(profile);
+
                 user.facebook.id    = profile.id;
                 user.facebook.token = token;
                 user.facebook.name  = profile.name.givenName + ' ' + profile.name.familyName;
@@ -348,7 +354,6 @@ module.exports = function(passport) {
 
                     if (user) {
                         console.log("google returns ");
-                        console.log(profile._json);
                         // if there is a user id already but no token (user was linked at one point and then removed)
                         if (!user.google.token) {
                             user.google.token = token;
@@ -428,5 +433,5 @@ module.exports = function(passport) {
           })
       );
 // FUNCTIONS ====================================================
-    
+
 };
