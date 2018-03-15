@@ -23,6 +23,7 @@
     "q": "^1.0.1",
     "request": "^2.85.0",
     "sprintf": "^0.1.5",
+    "sync-request": "^6.0.0",
     "thirty-two": "^1.0.2",
     "xmlhttprequest": "^1.8.0"
   },

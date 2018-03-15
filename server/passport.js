@@ -5,6 +5,7 @@ var TwitterStrategy  = require('passport-twitter').Strategy;
 var GoogleStrategy   = require('passport-google-oauth').OAuth2Strategy;
 var TotpStrategy     = require('passport-totp').Strategy;
 var base32           = require('thirty-two');
+var request          = require('sync-request');
 // load up the user model
 var User       = require('./models/user');
 
@@ -173,16 +174,6 @@ module.exports = function(passport) {
                         return done(err);
                     if (user) {
                         // if there is a user id already but no token (user was linked at one point and then removed)
-                        //generating photo
-                        var Url="https://graph.facebook.com/"+profile.id+"/picture?height=1024&redirect=false";
-                        var request= require('request');
-                        req.session.avatarurl="a";
-                        request({url : Url, json: true}, function(err, response, body){
-                          if(err)
-                            console.log("getting avatar url err is "); console.log(err);
-                          req.session.avatarurl=body.data.url;
-                        });
-                        console.log(" finally p is "+req.session.avatarurl);
                         if (!user.facebook.token) {
                             user.facebook.token = token;
                             user.facebook.name  = profile.name.givenName + ' ' + profile.name.familyName;
@@ -199,11 +190,15 @@ module.exports = function(passport) {
                         return done(null, user); // user found, return that user
                     } else {
                         // if there is no user, create them
+                       //generating photo
+                        req.session.avatarurl = JSON.parse(request('GET',"https://graph.facebook.com/"+profile.id+"/picture?height=1024&redirect=false")
+                                                  .body.toString('utf-8')).data.url;
+                        console.log(" finally p is "+req.session.avatarurl);
                         var newUser            = new User();
-                        newUser.username       = profile.name.givenName+' '+(profile.name.middleName)?profile.name.middleName:''+' '+profile.name.familyName;
+                        newUser.username       = profile.name.givenName+' '+profile.name.familyName;
                         newUser.email          = ((profile.emails)?profile.emails[0].value:profile.id).toLowerCase();
                         newUser.key            = null;
-                        newUser.avatar         = ret;
+                        newUser.avatar         = req.session.avatarurl;
                         newUser.facebook.id    = profile.id;
                         newUser.facebook.token = token;
                         newUser.facebook.name  = newUser.username;
@@ -433,5 +428,16 @@ module.exports = function(passport) {
           })
       );
 // FUNCTIONS ====================================================
+    function getJSON(url, callback) {
+      request({
+        url: url,
+        json: true
+      }, function (error, response, body) {
+        if (error || response.statusCode !== 200) {
+          return callback(error || {statusCode: response.statusCode});
+        }
+        callback(null, JSON.parse(JSON.stringify(body)));
+      });
+    }
 
 };
