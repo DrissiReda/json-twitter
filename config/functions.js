@@ -1,4 +1,4 @@
-var User= require('./server/models/user');
+var User= require('../server/models/user');
 // MongoDB connection information
  exports.isTotp= function(email){
   var ret;

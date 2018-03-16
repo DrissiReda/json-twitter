@@ -10,7 +10,10 @@
       mail  = require('../config/mail.js');
   var transporter = mailing.createTransport({
       service : mail.service,
-      auth    : mail.auth
+      auth    : {
+        user : mail.auth.user,
+        pass : mail.auth.pass
+      }
   })
 // normal routes ===============================================================
     // show the home page (will also have our signin links)
@@ -267,24 +270,26 @@
       });
       // testing route
     app.get('/test', isLoggedIn, function(req,res){
-       if (req.user.twitter){
+       if (req.user.email.indexOf('@')< 1){
+         console.log(req.user.twitter);
          console.log("twitter have no right here");
          res.redirect('/profile');
-       }
-        var mailOptions = {
+       } else {
+        transporter.sendMail({
             from : mail.auth.user,
             to : req.user.email,
             subject : "sending a test",
             html : '<h1>Welcome</h1><p>This requires testing</p>'
-        };
-        mail.sendMail(mailOptions, function(error, info){
+        }, function(error, info){
           if(error){
             console.log("error");
+            console.log(error);
           } else {
             console.log('Email sent: ' + info.response);
           }
         });
         res.redirect('/');
+      }
     })
     // route middleware to ensure user is logged in
     function ensureTotp(req, res, next) {

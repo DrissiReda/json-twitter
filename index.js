@@ -10,13 +10,13 @@ var express = require('express'),
     session = require('express-session'),
     mongoose = require('mongoose'),
     passport = require('passport');
-var config=require('./config.js');
+var database=require('./config/db.js');
 var app = express();
 
 //===============EXPRESS================
 // Configure Express
 app.use(logger('combined'));
-mongoose.connect('mongodb://' +config.mongodbUser+':'+config.mongodbPass+'@'+config.mongodbHost + ':11309/aws-web');
+mongoose.connect('mongodb://' +database.mongodbUser+':'+database.mongodbPass+'@'+database.mongodbHost + ':11309/aws-web');
 app.use(cookieParser('doesthisreallymatterdoesthislifereallymatter'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());

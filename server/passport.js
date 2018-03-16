@@ -11,7 +11,7 @@ var gravatar         = require('gravatar');
 var User       = require('./models/user');
 
 // load the auth variables
-var configAuth = require('../auth'); // use this one for testing
+var configAuth = require('../config/auth'); // use this one for testing
 
 module.exports = function(passport) {
 
