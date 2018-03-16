@@ -2,10 +2,16 @@
   var strings = require('../views/strings.json'),
   base32 = require('thirty-two'),
   crypto = require('crypto'),
-  funct = require('../functions.js')
+  mailing = require('nodemailer'),
   sprintf = require('sprintf');
   var XML = require('xmlhttprequest');
-
+//config files   ===============================================================
+  var funct = require('../config/functions.js'),
+      mail  = require('../config/mail.js');
+  var transporter = mailing.createTransport({
+      service : mail.service,
+      auth    : mail.auth
+  })
 // normal routes ===============================================================
     // show the home page (will also have our signin links)
     app.get('/', function(req, res) {
@@ -259,6 +265,27 @@
           //needs to verify the code before disabling it
           res.redirect('/totp-input');
       });
+      // testing route
+    app.get('/test', isLoggedIn, function(req,res){
+       if (req.user.twitter){
+         console.log("twitter have no right here");
+         res.redirect('/profile');
+       }
+        var mailOptions = {
+            from : mail.auth.user,
+            to : req.user.email,
+            subject : "sending a test",
+            html : '<h1>Welcome</h1><p>This requires testing</p>'
+        };
+        mail.sendMail(mailOptions, function(error, info){
+          if(error){
+            console.log("error");
+          } else {
+            console.log('Email sent: ' + info.response);
+          }
+        });
+        res.redirect('/');
+    })
     // route middleware to ensure user is logged in
     function ensureTotp(req, res, next) {
       req.user.key=req.session.fixingkey;

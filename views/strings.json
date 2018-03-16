@@ -5,5 +5,9 @@
     "enterCode": "Generated Code",
     "qrSetupSteps": "Scan this code with your favorite authenticator",
     "welcome": "Welcome",
-    "enableTotp": "Enable TOTP"
+    "enableTotp": "Enable TOTP",
+    "mail" : {
+      "signup-subject": "Welcome to json-twitter",
+      "signup-text"   : "We welcome you and remind you this could be html"
+    }
 }
