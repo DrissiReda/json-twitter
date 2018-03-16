@@ -272,7 +272,7 @@
     app.get('/test', isLoggedIn, function(req,res){
        if (req.user.email.indexOf('@')< 1){
          console.log(req.user.twitter);
-         console.log("twitter have no right here");
+         req.session.error="twitter have no right here";
          res.redirect('/profile');
        } else {
         transporter.sendMail({
