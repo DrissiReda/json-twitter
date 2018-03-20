@@ -4,8 +4,7 @@
   crypto = require('crypto'),
   mailing = require('nodemailer'),
   sprintf = require('sprintf');
-  var XML = require('xmlhttprequest');
-//config files   ===============================================================
+  //config files   ===============================================================
   var funct = require('../config/functions.js'),
       mail  = require('../config/mail.js');
   var transporter = mailing.createTransport({
@@ -19,6 +18,12 @@
     // show the home page (will also have our signin links)
     app.get('/', function(req, res) {
         res.render('home',{user:req.user});
+    });
+    app.get('/privacy', function(req, res) {
+      res.render('privacy');
+    });
+    app.get('/cookies', function(req, res) {
+      res.render('cookies');
     });
     app.get('/tos', function(req, res) {
       res.render('tos');
