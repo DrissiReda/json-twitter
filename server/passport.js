@@ -248,6 +248,7 @@ module.exports = function(passport) {
         consumerKey     : configAuth.twitterAuth.consumerKey,
         consumerSecret  : configAuth.twitterAuth.consumerSecret,
         callbackURL     : configAuth.twitterAuth.callbackURL,
+        userProfileURL  : 'https://api.twitter.com/1.1/account/verify_credentials.json?include_email=true',
         passReqToCallback : true // allows us to pass in the req from our route (lets us check if a user is logged in or not)
 
     },
@@ -282,10 +283,10 @@ module.exports = function(passport) {
                     } else {
                         // if there is no user, create them
                         console.log("twitter profile is ");
-                        console.log(profile.email);
+                        console.log(profile);
                         var newUser                 = new User();
                         newUser.username            = profile.username;
-                        newUser.email               = profile.id;
+                        newUser.email               = profile.emails[0].value
                         newUser.key                 = null;
                         newUser.avatar              = profile.photos[0].value;
                         newUser.twitter.id          = profile.id;
