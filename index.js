@@ -21,6 +21,13 @@ app.use((req, res, next) => {
 })
 //===============EXPRESS================
 // Configure Express
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*') // give access to any client
+  if (req.method === 'OPTIONS') {
+    res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, PATCH, PUT')
+    return res.status(200).json({})
+  }
+})
 app.use(logger('combined'));
 mongoose.connect('mongodb://' +database.mongodbUser+':'+database.mongodbPass+'@'+database.mongodbHost + ':11309/aws-web');
 app.use(cookieParser('doesthisreallymatterdoesthislifereallymatter'));
