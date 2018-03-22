@@ -28,7 +28,7 @@ mongoose.connect('mongodb://' +database.mongodbUser+':'+database.mongodbPass+'@'
 app.use(cookieParser('doesthisreallymatterdoesthislifereallymatter'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
-app.use(methodOverride('X-HTTP-Method-Override'));
+//app.use(methodOverride('X-HTTP-Method-Override'));
 app.use(session({secret: 'doesthisreallymatterdoesthislifereallymatter', saveUninitialized: true, resave: true}));
 app.use(passport.initialize());
 app.use(passport.session());
