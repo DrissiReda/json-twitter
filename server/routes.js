@@ -3,6 +3,7 @@
   base32 = require('thirty-two'),
   crypto = require('crypto'),
   mailing = require('nodemailer'),
+  jwt = require('jsonwebtoken')
   sprintf = require('sprintf');
   //config files   ===============================================================
   var funct = require('../config/functions.js'),
@@ -19,6 +20,7 @@
     app.get('/', function(req, res) {
         res.render('home',{user:req.user});
     });
+    app.set('secret','oursecret');
     app.get('/privacy', function(req, res) {
       res.render('privacy');
     });
