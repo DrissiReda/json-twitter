@@ -13,9 +13,9 @@ var express = require('express'),
     passport = require('passport');
 var database=require('./config/db.js');
 var app = express();
-app.use(cors())
-app.use((req, res, next) => {
+app.use(cors(),(req, res, next) => {
       res.header('Access-Control-Allow-Origin', '*') // give access to any client
+      res.header('Access-control-Allow-Headers','*')
       if (req.method === 'OPTIONS') {
               res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, PATCH, PUT')
               return res.status(200).json({})
