@@ -33,6 +33,7 @@
        if(!req.user) // no one logged in
           res.redirect('/');
         console.log("profile key is "+req.user.key);
+        console.log(req.user);
         res.render('profile', {
             user : req.user
         });
@@ -82,6 +83,46 @@
               }
             }
         );
+        app.post('/api/signin', function(req, res, next){
+          passport.authenticate('local-signin',
+            function(err, user, next){
+              if(err)
+                return next(err);
+                if(!user){
+                  return res.json(401, {message: 'no authorization, get lost!'});
+                }else {
+                if(req.user.key) {
+                res.session.fixingkey=req.user.key;
+                  console.log(" this is totp");
+                  res.session.method = 'totp';
+              } else {
+                  console.log(" this is plain ");
+                  res.session.method = 'plain';
+              }
+              // what is sent to the server
+              var payload={
+                username : user.username,
+                email : user.email,
+                avatar_url:user.avatar_url,
+                key : user.key,
+              };
+              var token=jwt.sign(payload,app.get('secret'),{expiresIn: 86400}); //24 hours
+              res.json(200, {
+                  success:true,
+                  message: 'token worked !',
+                  token : token
+              })
+            }
+          })(req, res, next)
+      })
+              /*
+              jwt.verify(token, app.get('secret'), function(err, decoded) {
+  			          if (err) {
+  				            return res.json({ success: false, message: 'Failed to authenticate token.' });
+  			         } else {
+  				            // if everything is good,decoded is what you want
+  				            console.log(decoded);
+  				       }*/
 
         // SIGNUP =================================
         // show the signup form
